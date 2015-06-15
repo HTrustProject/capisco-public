@@ -1,0 +1,48 @@
+<% provide(:title, "Outlinks") %>
+
+<div id="searchDiv" class="container col-md-6 col-md-offset-3 text-center">
+  <h1>HathiTrust <small>Outlinks Search</small></h1><br>
+  <p>Enter searches with the keyword. Watch your capitals and special chars.<br>Eg Pokémon != Pokemon...</p>
+ 
+  <div class="input-group input-group-lg">
+    <input type="text" id="searchbox" class="form-control" placeholder="Kiwi">
+    <span class="input-group-btn">
+      <button type="submit" id="clickButton" class = "btn btn-default"><%= image_tag("mag.png") %></button>
+    </span>
+  </div>
+  
+  <div id="outlinksResults" />
+  
+</div>
+
+
+  <script>
+    $( "#clickButton" ).click(function() {
+		var outlinksDivision = document.getElementById("outlinksResults");
+		
+		while (outlinksDivision.firstChild)
+			outlinksDivision.removeChild(outlinksDivision.firstChild);
+			
+		var url = "/links/outlinks.json" + encodeURI('?name=' + $('#searchbox').val());
+		$.ajax({url: url}).done(function(json)
+		{
+			outlinks = json;
+			
+			for (var outlink in outlinks) {
+				var outlinkHeading = document.createElement("h1");
+				outlinkHeading.innerHTML = outlinks[outlink];
+				outlinksDivision.appendChild(outlinkHeading);
+			}
+		})
+			
+	});
+
+
+      $(document).keypress(function(event){
+      var keycode = (event.keyCode ? event.keyCode : event.which);
+      if(keycode == '13'){
+          $('#clickButton').trigger('click');   
+      }
+
+  }); 
+  </script>

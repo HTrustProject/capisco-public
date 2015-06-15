@@ -1,0 +1,164 @@
+<%= javascript_include_tag "/assets/canvasXpress/js/canvasXpress.min.js" %>
+<%= javascript_include_tag "dropdown" %>
+<link href="/assets/canvasXpress/css/canvasXpress.css" rel="stylesheet">
+
+
+<% provide(:title, "Worksets") %>
+<div class="tab-content">
+	<div class="row container col-md-6 col-md-offset-3 text-center">
+	<h1>HathiTrust <small>Worksets</small></h1>
+</div>          
+
+
+<div class="clear"></div>
+
+<div class="row container col-md-6 col-md-offset-3">
+	<div id="workset-detail" class="result-list">
+		<div class="result-list-title">
+			<div class="result-list-title-edit action dropdown">
+				<ul>
+	   				<!--<li><a href="javascript:void(0)"><%= image_tag('img/network/editIcon.png') %></a></li>-->
+					<li><%= link_to image_tag('img/network/editIcon.png'), edit_workset_path(@workset) %></li>
+	   				<li><a class="dropdown-toggle" data-toggle="dropdown"><%= image_tag('download-24.png') %></a>
+   						<ul class="dropdown-menu dropdown-menu-right">
+	   						<li role="presentation" tabindex="-1"><%= link_to "greenstone", export_workset_path(format: :greenstonecsv) %></li>
+	   						<li role="presentation" tabindex="-1"><%= link_to "excel", export_workset_path(format: :xls) %></li>
+	   						<li role="presentation" tabindex="-1"><%= link_to "xml", export_workset_path(format: :xml) %></li>	   						
+							<li role="presentation" tabindex="-1"><%= link_to "csv", export_workset_path(format: :csv) %></li>	   						
+	   					</ul>
+	   				</li>
+	   			</ul>
+			</div>
+			<div>
+				<h2 class="title">Workset: <%= @workset.title %></h2>
+				<div class="description grey"><%= @workset.description %></div>
+			</div>
+		</div>
+		
+		<div id="sense-freq-chart" class="chart" style="display: none">
+			<canvas id="seqFreqChart" width="645" height="300"t5></canvas>
+		</div>
+		
+		<div class="clear"></div>
+
+
+		<% if @storedresults.count == 0 %>
+			This workset does not contain any entries.
+		<% else %>
+		<ul class="document-list">
+		<% @storedresults.each do |item| %>
+			<li class="document-item" id="<%= item.docid %>">
+				<div class="document-item-action action">
+		   		<ul>			   			
+		   			<li><%= link_to image_tag('img/network/deleteIcon.png'), deselect_workset_path(@workset) + "?docid=" + item.docid.to_s, method: :put %></li>
+		   		</ul>
+	   		</div>
+			  	<div class="document-item-checkbox"></div>
+	  			<div class="document-item-content">
+		  			<a href="<%= item.url %>"><%= item.title %></a>
+	
+					<div class="document-item-details grey">
+					<div class="document-item-page">Page: <%= item.pagenum %></div>
+					<div class="document-item-terms">Search terms: <%= item.searchterminfo %></div>
+			   		</div>
+		   		</div>
+			</li>
+		<% end %>
+		</ul>
+		<% end %>
+	</div>
+</div>
+
+<script>
+ 
+
+	/*
+		canvasId -- ID of the tag that will contain the graph
+		graphData -- data for rendering the graph. graphData is an array; each element is 
+		a map with keys workset and data 
+	 */
+	var renderGraphs = function(canvasId, graphData) {
+		// assuming we have only one workset
+		var worksetInfo = graphData[0].workset;
+		var worksetData = graphData[0].data;
+
+		if (worksetData.length == 0) {
+			return;
+		}
+		
+		$('#sense-freq-chart').slideDown();
+		
+		var titles = [worksetInfo.title]
+				
+		var senses = [];
+		var counts = [];
+		var maxCount = 0;
+		for (i = 0; i < worksetData.length; i++) {
+			var item = worksetData[i];
+			senses.push(item.sense);
+			counts.push(item.count);
+			if (item.count > maxCount) {
+				maxCount = item.count;
+			}
+		}
+		
+				//alert(maxCount);
+		// change height of canvas w.r.t. the number entries
+		var height = senses.length * 15 + 130;
+		$('#' + canvasId).attr('height', height);
+	
+		var cx2 = new CanvasXpress(canvasId,
+		{
+			"y" : {
+				"vars" : titles,
+				"smps" : senses,
+				"data" : [counts],
+			},
+		},
+		{
+			"autoScaleFont" : false,
+			"fontSize" : 15,
+			"xAxisTitle" : "Distribution of search senses",
+			"axisTitleFontSize" : 13,
+			"axisTickFontSize" : 10,
+			"xAxisTickStyle" : "dotted",
+			"xAxisTicks" : 4,
+			"xAxisShow" : true,
+			"setMinX" : 0,
+			"setMaxX" : maxCount + 1,
+			"xAxisTickColor" : 'rgb(240, 240, 240)',
+			"showLegend" : false,
+			"legendPosition" : "bottom",
+			"graphOrientation": "horizontal",
+			"graphType": "Bar",
+			"legendBox": false,
+			"legendScaleFontFactor": 1.2,
+			"plotByVariable": true,
+			"showShadow": false,
+			"smpLabelScaleFontFactor": 1.4,
+			"xAxis2Show": false,
+			"colors" : ['rgb(240,123,0)'],
+			"marginTop" : 0,
+			"marginBottom" : 0,
+			"canvasBox" : false,
+			"disableToolbar": true,
+		});
+   }
+
+	/*
+		canvasId -- ID of the tag that will contain the graph
+		worksetId -- ID of a workset 
+	 */
+ 	var showGraphs = function(canvasId, worksetId) {
+		$.ajax({
+			url: "/worksets/" + worksetId + "/senseFrequencies.json",
+			success: function(data) {
+				renderGraphs(canvasId, data);
+ 			}
+		});
+	}
+
+	$().ready( function() {
+		showGraphs('seqFreqChart', <%= @workset.id %>); 
+	});
+</script>

@@ -1,0 +1,103 @@
+<% provide(:title, "New Contexts Adder") %>
+<link href="/assets/visNetwork.css" rel="stylesheet" type="text/css" />
+<link href="/assets/vis.css" rel="stylesheet" type="text/css" />
+<script src="/assets/vis.js"></script>
+<script src="/assets/visNetworkDot.js"></script>
+
+
+<!-- The tick boxes on this page do not currently do antything. They can be removed. I have left them there incase they are needed to pass a bool to the controler -->
+<!-- This pages aim is to let someone add concepts and see how they are linked. It is under developed and needs work -->
+
+
+<div id="searchDiv" class="container col-md-6 col-md-offset-3 text-center">
+<h1>HathiTrust <small>New Contexts Adder</small></h1><br>
+</div>
+
+<div class="container" id="searchBoxes">
+  <div class="col-sm-4 column">
+    Here is where you put the concept to add
+    <div class="input-group">
+      <span class="input-group-addon">
+        <input type="checkbox" id='showInitialContext'>
+      </span>
+      <input type="text" class="form-control" id="concept" placeholder="Concept - One term">
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+
+  <div class="col-sm-4 column">
+    Any contexts you are wanting to display
+    <div class="input-group">
+      <span class="input-group-addon">
+        <input type="checkbox" id='showContext'>
+      </span>
+      <input type="text" id="context" class="form-control" placeholder="Context|Context|Context">
+    </div>
+  </div>
+
+  <div class="col-sm-3 column">
+    Any symbols you are wanting to display
+    <div class="input-group">
+      <span class="input-group-addon">
+        <input type="checkbox" id='showSymbols'>
+      </span>
+      <input type="text" id="symbols" class="form-control" placeholder="Symbol|Symbol|Symbol">
+    </div>
+  </div>
+
+  <div class="col-sm-1 column">
+   <button id="searchButton" type="button" class="btn btn-warning">Search</button>
+ </div>
+</div>
+
+
+
+<script>
+  $( "#searchButton" ).click(function() {
+    $("#searchDiv").animate({paddingTop:"-=160px"});
+    var ajax_load = "<div class='containder text-center' id='loadingGif'><img class='loading' src='/assets/load.gif' alt='loading...' /></div>";
+
+    var url = "/contextsadder/getNewJson" + encodeURI('?concept=' + $('#concept').val() + '&contexts=' + $('#context').val() + '&symbols=' + $('#symbols').val() + '&showInitialContext=' + $('#showInitialContext').prop('checked') + '&showContext=' + $('#showContext').prop('checked')+ '&showSymbols=' + $('#showSymbols').prop('checked'));
+
+    draw(url);
+  });
+
+
+  $(document).keypress(function(event){
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if(keycode == '13'){
+      $('#searchButton').trigger('click');
+    }
+  });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Divs used to display the network graph -->
+<div id="network-popUp">
+  <span id="operation">node</span> <br>
+  <table style="margin:auto;"><tr>
+    <td>id</td><td><input id="node-id" value="new value"></td>
+  </tr>
+  <tr>
+    <td>label</td><td><input id="node-label" value="new value"> </td>
+  </tr></table>
+  <input type="button" value="save" id="saveButton"></button>
+  <input type="button" value="cancel" id="cancelButton"></button>
+</div>
+<br />
+<div class="container col-md-8 col-md-offset-2 text-center" id="mynetwork"></div>
+
+<p class="container col-md-8 col-md-offset-2 text-center" id="selection"></p>

@@ -1,0 +1,551 @@
+<% provide(:title, "Semantic Search") %>
+
+
+<script src="/assets/owl.carousel.js"></script>
+<script src="/assets/bootstrap-tags.js"></script>
+
+<link href="/assets/owl.carousel.css" rel="stylesheet" type="text/css">
+<link href="/assets/owl.theme.css" rel="stylesheet" type="text/css">
+<link href="/assets/owl.custom.css" rel="stylesheet">
+<link href="/assets/bootstrap-tags.css" rel="stylesheet">
+
+
+<script type="text/javascript">
+
+  // going to store objects as tags rather than strings
+  // see http://timschlechter.github.io/bootstrap-tagsinput/examples/ section "objects as tags"
+  // Can't. We use a different bootstrap-tags library: see https://github.com/maxwells/bootstrap-tags
+
+  var senseTagRecords = {} // store a map of term records for each of the senseTags (clicked senses). Map indexed by sense.
+  var senseTags;
+  var outlinkTags;
+
+  var MAX_NUM_TAGS = 4; // to keep the code the way it was (4 was probably selected so that the tags fit in the input field)
+
+  var Son1 = false;
+  var Son2 = false;
+  var Son3 = false;
+  var Son4 = false;
+
+  var showOutlinks;
+
+  var currentTab = "t1";
+
+  var Oon = false;
+  var owlOutlinks;
+
+  var querys;
+  var termToTermnumMap = {}; // map that will store the reverse of querys array: query to index.
+
+  // no longer a get request but a post request
+
+  function getDocs(){
+
+	  terms = ($('#searchbox').val()).split("|"); // e.g. Kiwi|Cow becomes [Kiwi, Cow]
+
+		// get all .owl-items - but need to sort the same as sensetags. Same for terms
+		//var senseIDs = $(".owl-item").map(function() {
+		//    return $(this).attr("id");
+		//}).get();
+
+	   var senseTags_ = senseTags.getTags();
+	   //console.log(senseTags_);
+
+		//console.log("Terms: " + terms);
+	   var outlinkTags_ = outlinkTags.getTags();
+
+      // console.log("Opening page");
+
+		// need to store term names and term order.
+		// We sort the termInfo records by sense later on, to keep them in unison
+	   var termInfos = [];
+		for (var i = 0; i < senseTags_.length; i++) {
+			var sensetag = senseTags_[i];
+			termInfos[i] = senseTagRecords[sensetag]; // {sense:..., term: ...., senseid: ...}
+		}
+		//console.log("termInfos: " + JSON.stringify(termInfos));
+
+		// get all the possible combinations of the input terms
+	   var termCombinations = getCombinations(senseTags_);
+	   // console.log(termCombinations);
+
+	   $("#combinations-input-id").attr("value", JSON.stringify(termCombinations)); // this is stored sorted
+		// sort senses alphabetically too, to match the order of the combinations, but terms and termnum
+		// have to be sorted with it so that the sorted senses map to their terms and termnums
+		// http://stackoverflow.com/questions/979256/sorting-an-array-of-javascript-objects
+		termInfos.sort(function(t1, t2) { return t1.sense.localeCompare(t2.sense); } );	// sort by sense field to match the order of the combinations
+		$("#terminfos-input-id").attr("value", JSON.stringify(termInfos));
+		$("#senses-input-id").attr("value", JSON.stringify(senseTags_.sort())); // now can sort senses alphabetically to match the order of the combinations (dup, but for backwards compatibility)
+		$("#outlinks-input-id").attr("value", JSON.stringify(outlinkTags_));
+		// console.log("Terms: " + JSON.stringify(termInfos));
+
+           // Will open url=/search_results/results in a new window, and POST senseTerms, outlinkTerms
+           // AND the termCombinations array of arrays of strings, e.g. [["AB"], ["A"], ["B"]]
+
+	   var myForm = $("#getdocs-form-id");
+	   myForm.submit();
+  }
+
+var onLoad = function() {
+  // Using OnLoad rather than doc.ready as Rails stops it from being called every time the page loads if you come from a link on another page
+
+  showOutlinks = readCookieAsBoolean("showOutlinks");
+  // function is in application.js
+
+  senseTags = $('#senses-tag-list').tags({
+    tagData:[],
+    tagClass: "btn-warning",
+    tagSize: "lg",
+    maxNumTags: MAX_NUM_TAGS, // -1 for no limit, see https://github.com/maxwells/bootstrap-tags
+    promptText: "Senses will appear here...",
+    afterDeletingTag: function(tag) {
+			// This function makes the tab images black again if the user deletes the last sense of any term
+
+    		var sense = tag;
+    		var termForSense = senseTagRecords[sense].term;
+
+			// delete the sense from the senseTagRecords so the following for loop will work sensibly
+			// no matter how many senses for the same term the user first chose and then deleted
+
+			delete senseTagRecords[sense];
+
+			var deletedLastSenseTagForSameTerm = true;
+
+    		// check if any other sense tag is still associated with that term
+    		for(var key in senseTagRecords) {
+    			sense = key;
+    			termrecord = senseTagRecords[key];
+    			if(termrecord.term == termForSense) { // another sense (sensetag) still exists for the same term
+    				deletedLastSenseTagForSameTerm = false;
+    			}
+    		}
+
+    		if(deletedLastSenseTagForSameTerm) { // mark the tab with a black square
+    			for(var i = 0; i < querys.length; i++) { // don't have the termnums yet in the senseTagRecords, so have to loop through querys
+    				if(querys[i] == termForSense) {
+    					var tabnum = i+1; // loop counter starts at 0 but tab numbering starts at 1
+						$("#sense" + tabnum + "img").html("<img src='/assets/square-black.png'>");
+					}
+				}
+    		}
+
+    	}
+  });
+
+  outlinkTags = $('#outlink-tag-list').tags({
+    tagData:[],
+    tagClass: "btn-success",
+    tagSize: "lg"
+  });
+
+  if(!showOutlinks) {
+    $("#outlinksTitleDiv").hide();
+    $("#outlinksCarousel").hide();
+    $("#outlink-tag-list").hide();
+  }
+
+  var owlSenses1 = $("#owl-senses1");
+  var owlSenses2 = $("#owl-senses2");
+  var owlSenses3 = $("#owl-senses3");
+  var owlSenses4 = $("#owl-senses4");
+
+  var owlOutlinks = $("#owl-outlinks");
+
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
+      currentTab = e.target.id; // get curremt tabe name
+        var currentTabName = $(e.target).text().trim(); // get current text
+        $("#senseLabel").text(currentTabName); // sets the senseLabel on tab change
+      });
+
+  owlSenses1.on('click', '.owl-item', clickFunctionForTopSenses);
+  owlSenses2.on('click', '.owl-item', clickFunctionForTopSenses);
+  owlSenses3.on('click', '.owl-item', clickFunctionForTopSenses);
+  owlSenses4.on('click', '.owl-item', clickFunctionForTopSenses);
+
+  owlOutlinks.on('click', '.owl-item', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var data = escape(e.target.firstChild.data.split("|")[0]).replace(/%20/g, " ").substr(1);
+
+    outlinkTags.addTag(decodeURIComponent(data));
+  });
+
+};
+</script>
+
+<script type="text/javascript">
+
+  var clickFunctionForTopSenses = function(e) {
+
+    // document.getElementById(currentTab).innerHTML = "<img src='/assets/square-orange.png'> " + getTerm(parseInt(currentTab.charAt(1)));
+    $("#sense" + currentTab.charAt(1) + "img").html("<img src='/assets/square-orange.png'>");
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    //var data = escape(e.target.firstChild.data.split("|")[0]).replace(/%20/g, " ").substr(1);
+		var data_sense = decodeURIComponent(e.target.getAttribute("data-sense"));
+		senseTags.addTag(data_sense);    //senseTags.addTag(decodeURIComponent(data));
+
+		// the above call won't exceed the max number of senseTags,
+		// But we have to check that the senseRecords we create won't exceed this number either,
+		// so that our afterDeletingTag handler still works correctly
+
+		// http://stackoverflow.com/questions/126100/how-to-efficiently-count-the-number-of-keys-properties-of-an-object-in-javascrip
+
+		if(MAX_NUM_TAGS > Object.keys(senseTagRecords).length) {
+
+			var data_term = decodeURIComponent(e.target.getAttribute("data-term"));
+			var termnum = termToTermnumMap[data_term];
+			var data_senseid = decodeURIComponent(e.target.getAttribute("data-sense-id"));
+			var senseRecord = {
+				senseid: data_senseid,
+				sense: data_sense,
+				term: data_term, // termnum info will be added later
+				termnum: termnum
+			};
+
+			senseTagRecords[data_sense] = senseRecord; // map indexed by sense
+				// don't know why this function clickFunctionForTopSenses() is called twice.
+				// But because senseTagRecords is a hashmap, records for the same sense won't get added twice
+				//alert("added: " + JSON.stringify(senseTagRecords));
+		}
+
+      if(!showOutlinks) { // only populate outlinks if the option for it is turned on
+        return;
+      }
+
+      $("#outlinkLabel").text(data);
+
+      if (Oon) {
+        owlOutlinks.data('owlCarousel').reinit({
+         items : 3,
+         jsonPath : "/semantic_search/getOwlJson.json?type=outlinks&query=" + data
+       });
+      } else {
+        Oon = true;
+
+        owlOutlinks.owlCarousel({
+         items : 3,
+         jsonPath : "/semantic_search/getOwlJson.json?type=outlinks&query=" + data
+       });
+      }
+    };
+
+
+    var getTerm = function(no){
+      no = no - 1
+      return querys[no];
+    };
+
+  </script>
+
+  <body onload="onLoad();">
+
+  <div id="searchDiv">
+    <div class="row container col-md-6 col-md-offset-3 text-center">
+      <h1>HathiTrust
+        <small>Semantic Search</small>
+      </h1>
+      <p>Enter your terms separated by a '|'</p>
+    </div>
+
+
+    <!-- Each sense carosel is in it's own tab -->
+
+    <div class="container">
+      <div class="row clearfix">
+        <div class="col-md-10 column">
+          <div class="row clearfix">
+            <div class="col-md-9 col-md-offset-2 column noRightPad">
+              <input type="text" id="searchbox" class="form-control" placeholder="e.g., Kiwi | Emu | ...">
+            </div>
+            <div class="col-md-1 column noLeftPad">
+              <a href="#"><%= image_tag("mag.png", :id => "searchButton") %></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="container-tabs" style="visibility: hidden;">
+      <div role="tabpanel">
+        <ul class="nav nav-tabs" role="tablist" style="visibility: hidden;">
+          <li role="presentation" class="active"><a href="#first" id="t1" aria-controls="first" role="tab" data-toggle="tab"><img src="/assets/square-black.png"> First Term</a></li>
+          <li role="presentation"><a href="#second" id="t2" aria-controls="second" role="tab" data-toggle="tab"><img src="/assets/square-black.png"> Second Term</a></li>
+          <li role="presentation"><a href="#third" id="t3" aria-controls="third" role="tab" data-toggle="tab"><img src="/assets/square-black.png"> Third Term</a></li>
+          <li role="presentation"><a href="#fourth" id="t4" aria-controls="fourth" role="tab" data-toggle="tab"><img src="/assets/square-black.png"> Fourth Term</a></li>
+        </ul>
+
+
+        <div class="tab-content">
+			<div class="row container col-md-6 col-md-offset-3 text-center">
+		        <h1>HathiTrust <small>Semantic Search</small></h1>
+		        <p>What sense of "<span id="senseLabel"></span>" did you mean?</p>
+			</div>
+
+          <div class="clear"></div>
+
+          <div id="wait-load-id" class="text-center" style="display: none;"><img id='loadingGif' class='loading' src='/assets/load.gif' alt='loading...' /></div>
+
+          <div role="tabpanel" class="tab-pane active" id="first">
+
+            <div class="row container col-md-10 col-md-offset-2" id="senses">
+              <div id="owl-senses1" class="owl-carousel owl-theme"></div>
+            </div>
+
+          </div>
+          <div role="tabpanel" class="tab-pane" id="second">
+
+            <div class="row container col-md-10 col-md-offset-2" id="senses">
+              <div id="owl-senses2" class="owl-carousel owl-theme"></div>
+            </div>
+
+          </div>
+
+          <div role="tabpanel" class="tab-pane" id="third">
+
+            <div class="row container col-md-10 col-md-offset-2" id="senses">
+              <div id="owl-senses3" class="owl-carousel owl-theme"></div>
+            </div>
+
+          </div>
+
+          <div role="tabpanel" class="tab-pane" id="fourth">
+
+            <div class="row container col-md-10 col-md-offset-2" id="senses">
+              <div id="owl-senses4" class="owl-carousel owl-theme"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="row" id="outlinks">
+		<div class="container row col-md-10 col-md-offset-1" id="outlinksTitleDiv">
+			<h3>What outlinks of "<span id="outlinkLabel"></span>" did you mean?</h3>
+		</div>
+
+		<div class="row container col-md-10 col-md-offset-2" id="outlinksCarousel">
+			<div id="owl-outlinks" class="owl-carousel owl-theme"></div>
+		</div>
+    </div>
+
+    <div id="unrecognized-msg" class="container row col-md-5 col-md-offset-4" style="display: none">
+      <div class="row container col-md-6 col-md-offset-3 text-center">
+        <h1>HathiTrust <small>Semantic Search</small></h1>
+      </div>
+
+      <div class="clear"></div>
+
+      <div class="alert alert-success" style="display: none">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        Success! Your request has been sent.
+      </div>
+
+      <div class="alert alert-danger" style="display: none">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        Error! Request was not sent.
+      </div>
+
+      <p>We did not recognize the term <span id="unrecognized-term" class="unrecognized-term"></span>. Please
+        help us improve the system by sending the information to an expert.</p>
+      <%= form_for :item,
+                   url: {controller: 'basket_items', action: 'add'},
+                   remote: true do |f| %>
+          <%= f.hidden_field :term, id: 'unrecognized-term-field' %>
+          <%= f.text_area :comment, placeholder: 'Please describe its meaning' %>
+          <div class="btn-block">
+            <%= f.submit value: 'Submit', class: 'btn btn-action' %>
+            <a href="#" onclick="location.reload(true); return false;">New search</a>
+          </div>
+      <% end %>
+    </div>
+
+  <div id="search-result" class="container col-md-6 col-md-offset-3">
+    <div id="tag-div">
+      <div id="senseIndicators" class="row">
+        <span id="sense1span" class="senseSpan"></span>
+        <span id="sense2span" class="senseSpan"></span>
+        <span id="sense3span" class="senseSpan"></span>
+        <span id="sense4span" class="senseSpan"></span>
+      </div>
+
+
+      <div class="row">
+        <div class="tags">
+          <div>
+            <div id="senses-tag-list" class="tag-list"></div>
+            <div id="outlink-tag-list" class="tag-list"></div>
+          </div>
+          <div id="resetButt">
+            <a href="#" onclick='location.reload(true); return false;'>
+              <span style="white-space: nowrap;">New Search</span>
+            </a>
+          </div>
+        </div>
+
+        <form target="_blank" id="getdocs-form-id" action="/search_results/results" method="POST">
+          <input type="hidden" name="combinationTerms" id="combinations-input-id" value=""/>
+          <input type="hidden" name="senseTerms" id="senses-input-id" value=""/>
+          <!--<input type="hidden" name="senseIDs" id="senseIDs-input-id" value="" />-->
+          <input type="hidden" name="termInfos" id="terminfos-input-id" value=""/>
+          <input type="hidden" name="outlinkTerms" id="outlinks-input-id" value=""/>
+          <a id="getDocsBut" href="#" class="tag btn btn-warning find-doc">Find Documents</a>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <script type="text/javascript">
+  	document.getElementById("getDocsBut").addEventListener("click", function(event) {getDocs();});
+
+    var changeTab = function(tabNo){
+      var tabName = '#t' + tabNo;
+
+      $(tabName).tab('show');
+    }
+
+	 var fillSenses = function(query, tabNo, Oon) {
+    	$('#unrecognised-msg').hide();
+		document.getElementById("t" + tabNo).innerHTML = "<img src='/assets/square-black.png'>  " + query;
+
+		// callbacks for owlCarousel are documented at http://owlgraphic.com/owlcarousel/
+		if (Oon) {
+			$("#owl-senses" + tabNo).data('owlCarousel').reinit({
+				jsonPath: "/semantic_search/getOwlJson.json?type=senses&query=" + query,
+				beforeInit: function(elem) { // show the wait spinner
+					$('#wait-load-id').show();
+				},
+				afterInit : function(elem) {
+					$('#wait-load-id').hide(); // contents of carousel are ready, hide the wait spinner
+					checkForNoSenses();
+				}
+			});
+		} else {
+			Oon = true;
+			$("#owl-senses" + tabNo).owlCarousel({
+				items : 3,
+				jsonPath : "/semantic_search/getOwlJson.json?type=senses&query=" + query,
+				beforeInit: function(elem) { // show the wait spinner
+					$('#wait-load-id').show();
+				},
+				afterInit : function(elem) {
+					$('#wait-load-id').hide(); // contents of carousel are ready, hide the wait spinner
+					checkForNoSenses();
+				}
+			});
+		}
+
+		return Oon;
+	};
+
+	var checkForNoSenses = function () {
+        $('#unrecognized-msg').hide();
+        /* the active tab of the carousel has no senses */
+        if ($('.active #no-senses').length > 0) {
+            var term = $('.active #no-senses').attr('data-term');
+            $('#unrecognized-msg').fadeIn();
+            $('#unrecognized-term').text(term);
+            $('#unrecognized-term-field').val(term);
+            $("#container-tabs").hide();
+            $("#tag-div").hide();
+        }
+    };
+
+    $('#unrecognized-term-add').bind('ajax:success', function () {
+        $('#unrecognized-msg').hide();
+    });
+
+	/* checks if the tab refers to a search term that has no senses */
+	$(".senseSpan").click(function() {
+		$('#unrecognized-msg').hide();
+		checkForNoSenses();
+	});
+
+    $( "#searchButton" ).click(function() {
+
+    	$( ".form-control" ).attr("readonly", true); // $( ".form-control" ).prop("readonly", true);
+      onLoad(); // Does this to prevent the Rails doc.Ready() bug
+
+        $("#searchDiv").animate({paddingTop: "-=130px"});
+        $("#outlinks").css({opacity: 0, visibility: "visible"}).animate({opacity: 1.0}, 900);
+        $("#container-tabs").css({opacity: 0, visibility: "visible"}).animate({opacity: 1.0}, 900);
+        $("#tag-div").css({opacity: 0, visibility: "visible"}).animate({opacity: 1.0}, 900);
+
+
+      querys = ($('#searchbox').val()).split("|");
+
+      // store the reverse of querys array: query to index map,
+      // where index represents the termnum (the order in which the terms of the query where typed)
+		for(var i = 0; i < querys.length; i++) {
+		     term = querys[i];
+		     termToTermnumMap[term] = i;
+		}
+
+      $("#whatSense").css('visibility', 'visible');
+
+      $("#senseLabel").text(querys[0]);
+
+      if (querys[0]!=null){
+        Son1 = fillSenses(querys[0], 1, Son1);
+        // $("#t1").css('visibility', 'visible');
+        $("#sense1span").html("<a href='#' onclick='changeTab(1)';><span id='sense1img' class='senseImg'><img src='/assets/square-black.png'></span>" + querys[0] + "</a>   ");
+      }
+      else{
+        $("#t1").css('visibility', 'hidden');
+      }
+
+      if (querys[1]!=null){
+        Son2 = fillSenses(querys[1], 2, Son2);
+        // $("#t2").css('visibility', 'visible');
+        $("#sense2span").html("<a href='#' onclick='changeTab(2)';><span id='sense2img' class='senseImg'><img src='/assets/square-black.png'></span>" + querys[1] + "</a>   ");
+      }
+      else{
+        $("#t2").css('visibility', 'hidden');
+      }
+
+      if (querys[2]!=null){
+        Son3 = fillSenses(querys[2], 3, Son3);
+        // $("#t3").css('visibility', 'visible');
+        $("#sense3span").html("<a href='#' onclick='changeTab(3)';><span id='sense3img' class='senseImg'><img src='/assets/square-black.png'></span>" + querys[2] + "</a>   ");
+      }
+      else{
+        $("#t3").css('visibility', 'hidden');
+      }
+
+      if (querys[3]!=null){
+        Son4 = fillSenses(querys[3], 4, Son4);
+        // $("#t4").css('visibility', 'visible');
+        $("#sense4span").html("<a href='#' onclick='changeTab(4)';><span id='sense4img' class='senseImg'><img src='/assets/square-black.png'></span>" + querys[3] + "</a>   ");
+      }
+      else{
+        $("#t4").css('visibility', 'hidden');
+      }
+
+      $("#searchDiv").hide();
+    });
+
+	$(document).keypress(function(event){ // keypress event that checks for enter
+		var keycode = (event.keyCode ? event.keyCode : event.which);
+		if(keycode == '13'){
+			$('#searchButton').trigger('click');
+		}
+	});
+
+    $().ready(function () {
+        $('#unrecognized-msg form')
+                .bind('ajax:success', function () {
+                    $('.alert-success').fadeIn();
+                })
+                .bind('ajax:error', function () {
+                    $('.alert-error').fadeIn();
+                });
+    });
+</script>
+

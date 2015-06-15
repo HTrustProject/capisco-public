@@ -1,0 +1,139 @@
+<% provide(:title, @concept.name) %>
+<link href="/assets/visNetwork.css" rel="stylesheet" type="text/css" />
+<link href="/assets/vis.css" rel="stylesheet" type="text/css" />
+<script src="/assets/vis.js"></script>
+<script src="/assets/visNetwork.js"></script>
+
+<div id="concept" class="container text-center">
+	<h1>HathiTrust <small>Explore Contexts</small></h1>
+	<p title="<%= @concept.description %>">Contexts for the concept "<%= @concept.name %>"</p>
+	
+	<div id="view-contexts" class="result-list">
+				<ul class="action">
+	   				<li><span class="btn btn-action disabled">By Term</span></li>
+	   				<li><span class="btn btn-action">By Context</span></li>
+	   			</ul>
+	</div>
+</div>
+
+<div class="row col-md-offset-3">
+</div>
+
+<div id="synonyms-div" style="height:70%">
+	<div id="carousels">
+		<div id="context-carousel-div" class="result-list"></div>
+		<div id="symbol-carousel-div" class="result-list"></div>
+	</div>
+</div>
+
+<script>
+$().ready(function() {
+	$('.action .btn').click(function() {
+		if ($(this).hasClass('disabled')) {
+			return false; 
+		} else {
+			$('.action .btn').removeClass('disabled');
+			$(this).addClass('disabled');
+
+			$('#symbol-carousel-div').toggle();
+			$('#context-carousel-div').toggle();
+		}
+	});
+});
+
+var primaryConcept = {id: <%=@concept.id%>, name: "<%=@concept.name%>", description: "<%=@concept.description%>"};
+var network;
+
+//Enable tooltips for bootstrap (It's not enabled by default, maybe bug?)
+$(function () { $("[data-toggle='tooltip']").tooltip(); });
+
+$("#carousel-grouping-toggle").click(function() {
+	var attr = $("#carousel-grouping-toggle").attr("aria-pressed");
+	//Note that this is called imeddiately before aria-pressed is set, so logic is opposite
+	if (attr == "true") {
+		$("#symbol-carousel-div").hide();
+		$("#context-carousel-div").show();
+		$("#carousel-grouping-toggle").html("Group by symbols");
+	}
+	else {
+		$("#symbol-carousel-div").show();
+		$("#context-carousel-div").hide();
+		$("#carousel-grouping-toggle").html("Group by contexts");
+	}
+});
+
+// Adds html elements to the page for each synonym in the list.
+function fillContextCarousel(synonyms) {
+	var symbols = arrayUnique(synonyms.map(function(synonym) { return synonym.symbol; }));
+	var concepts = {};
+	
+	for (var index in synonyms) {
+		var synonym = synonyms[index];
+		var concept = synonym.concept;
+		var id = parseInt(concept.id);
+		concepts[id] = concept;
+	}
+	
+	for (var i = 0; i < symbols.length; i++) {
+		var mainDiv = $("<div id=\"symbol" + i + "-div\" class=\"row\"></div>")
+		var titleDiv = $('<div id="symbol' + i + '-title-div" class="col-md-8 col-md-offset-2"></div>')
+		var title = $('<div class="result-list-title"><h2>' + symbols[i] + '</h2></div>');
+		var carouselDiv = $('<div class="col-md-8 col-md-offset-2 clear context"></div>');
+		
+		var currentSynonyms = synonyms.filter(function(synonym) { return (synonym.symbol === symbols[parseInt(i)]); });
+		var currentConceptIds = currentSynonyms.map(function(synonym) { return synonym.concept.id; });
+		var currentConceptKeys = currentConceptIds.map(function(id) { return parseInt(id); });
+		var currentConcepts = currentConceptKeys.map(function(key) { return concepts[key]; });
+		var entries = currentConcepts.map(function(concept){
+			var uri = encodeURI("/concepts/show?id=" + concept.id);
+			var link = $("<span data-toggle=\"tooltip\" title=\"" + concept.description + "\"></span>");
+			var name = $("<p>" + concept.name + "</p>");
+			name.appendTo(link);
+			return link;
+		});
+		
+		title.appendTo(titleDiv);
+		titleDiv.appendTo(mainDiv);
+		createCarousel("symbol" + i + "-carousel", entries).appendTo(carouselDiv);
+		carouselDiv.appendTo(mainDiv);
+		
+		mainDiv.appendTo($("#context-carousel-div"));
+	}
+}
+
+function fillSymbolCarousel(synonyms) {
+	var concepts = arrayUnique(synonyms.map(function(synonym) { return synonym.concept; }));
+	
+	for (var i = 0; i < concepts.length; i++) {
+		var mainDiv = $('<div id="concept' + i + '-div" class="row"></div>');
+		var titleDiv = $('<div id="concept' + i + '-title-div" class="col-md-6 col-md-offset-3"></div>');
+		var title = $('<div class="result-list-title"><div class="result-list-title-edit"><a href="#">New Synonym</a></div><h2>' + concepts[i].name + '</h2></div>');
+		var listDiv = $('<div class="col-md-6 col-md-offset-3 clear context"></div>');
+		var list = $('<ul class="orange-square-list"></ul>');
+		
+		var currentSynonyms = synonyms.filter(function(synonym) { return (synonym.concept === concepts[i]); });
+		var currentSymbols = currentSynonyms.map(function(synonym) { return synonym.symbol; });
+		var entries = currentSymbols.map(function(symbol){ return $("<li>" + symbol + "</li>"); });
+		for (var index in entries) {
+			entries[index].appendTo(list);
+		}
+		//icon.click(function() { addSynonym(concepts[i]))
+		
+		title.appendTo(titleDiv);
+		titleDiv.appendTo(mainDiv);
+		list.appendTo(listDiv);
+		listDiv.appendTo(mainDiv);
+		
+		mainDiv.appendTo($("#symbol-carousel-div"));
+	}
+}
+
+function loadSynonyms(synonyms) {
+	fillContextCarousel(synonyms);
+	fillSymbolCarousel(synonyms);
+	$("#symbol-carousel-div").hide();
+}
+
+$(document).ready(getInlinks(primaryConcept, loadSynonyms));
+
+</script>

@@ -1,0 +1,270 @@
+// Place all the styles related to the static_pages controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+// see also application.css for further styles
+
+.nav {
+	line-height: 20px;
+}
+
+.nav > li > span {
+  position: relative;
+  display: block;
+  padding: 15px 15px;
+}
+
+.nav .active a {
+	color: #f07b00;
+}
+
+.clear {
+	clear: both;
+}
+
+.center {
+	text-align: center;
+}
+
+.hint {
+	font-size: 12px;
+	color: #809198;
+	text-align: right;
+}
+
+.grey {
+	color: #777777;
+}
+
+.close-msg:after {
+	font-size: 17px;
+	color: #f07b00;
+	margin-left: 15px;
+	cursor: pointer;
+	content: "\2716";
+}
+
+.doc-info {
+	font-size: 75%;
+	white-space: nowrap;
+}
+
+h1 {
+    font-family: "Times New Roman", Georgia, Serif;
+}
+
+h2, h3, h4 {
+	font-size: 15px;
+}
+
+body {
+	font-family: 'Open Sans', sans-serif;
+	font-size: 15px;
+}
+
+#searchDiv {
+  padding-top: 50px;
+}
+
+#loadingGif {
+  padding-top: 60px;
+}
+
+#container-tabs {
+	visibility: hidden;
+	/*padding-top: 100px;*/
+}
+
+#whatSense{
+	visibility: hidden;
+}
+
+#outlinks{
+	visibility: hidden;
+	padding-top: 40px;
+}
+
+#tag-div{
+	padding-top: 40px;
+	visibility: hidden;
+}
+
+#senseIndicators{
+	padding-bottom: 5px;
+	font-size: 150%;
+}
+
+#resetButt{
+	text-align: right;
+	font-size: 100%;
+}
+
+.btn-warning {
+	border-color: #f07b00;
+	background-color: #f07b00;
+}
+
+.btn-warning:hover {
+	border-color: #f07b00;
+	background-color: #f07b00;
+}
+
+.btn-warning:focus {
+	border-color: #f07b00;
+	background-color: #f07b00;
+}
+
+.btn-warning:active {
+	border-color: #f07b00;
+	background-color: #f07b00;
+}
+
+.find-doc {
+	font-size: 17px;
+	font-weight: bold;
+	padding-bottom: 3px;
+	padding-top: 3px;
+}
+
+.noLeftPad{
+	padding-left: 5px;
+}
+
+.noRightPad{
+	padding-right: 0px;
+}
+
+.owl-item{
+	display: inline;
+	font-size: 110%;
+}
+
+.owl-item:hover{
+	display: inline;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.senseSpan{
+	padding-right: 10px;
+}
+
+.senseImg{
+	padding-right: 5px;
+}
+
+.global-message {
+	background-color: rgb(240, 123, 0);
+	color: rgb(255, 255, 255);
+	text-align: center;
+	padding: 9px;
+	font-weight: bold;
+}
+
+.orange-square-list {
+  list-style-image: url('/assets/square-orange-10.png');
+}
+
+.orange-square-list li {
+  margin: 9px 0;
+  padding-left: 6px
+}
+
+.orange-square-list li.active a {
+  color: #f07b00;
+}
+
+.btn-action,
+.btn-action:hover,
+.btn-action:focus {
+  background-color: #f07b00;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 1px 6px;
+  min-width: 60px;
+}
+
+.dropdown-menu {
+    border-color: #F07B00;
+    top: 30px
+}
+
+.unrecognized-term:before {
+  content: '"';
+}
+
+.unrecognized-term:after {
+  content: '"';
+}
+
+input, textarea {
+  vertical-align: top;
+}
+
+#unrecognized-msg {
+  margin-bottom: 20px;
+}
+
+#unrecognized-msg textarea {
+  width: 80%;
+}
+
+#unrecognized-msg .btn-block {
+  margin-top: 6px;
+}
+
+#search-result .tags {
+  width: 670px;
+  display: inline-block;
+}
+
+#search-result form {
+  display: inline-block;
+  vertical-align: top;
+  margin-left: 10px;
+}
+
+.carousel-control .icon-prev:before {
+  content: '\2329';
+}
+
+.carousel-control .icon-next:before {
+  content: '\232A';
+}
+
+.carousel-control .icon-prev,
+.carousel-control .icon-next {
+  font-size: 50px;
+  height: 50px;
+  font-weight: bold;
+  margin-top: 0;
+}
+
+.carousel-control,
+.carousel-control:focus {
+  color: #f07b00;
+  text-shadow: none;
+}
+
+.carousel-control:hover {
+  color: #f07b00;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6)
+}
+
+.carousel-control.left,
+.carousel-control.right {
+  background: none;    
+}
+
+.carousel-control .icon-prev,
+.carousel-control .icon-next {
+  top: 30%;
+}
+
+.result-list .action li:hover {
+  background: none;
+} 
+
+#search-result {
+  width: 850px;
+}

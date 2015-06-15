@@ -1,0 +1,45 @@
+<div id="synonymDiv" class="container col-md-6 col-md-offset-3 text-center">
+  <h1>HathiTrust <small>Synonyms</small></h1><br>
+  <p>Enter the name of the word you are thinking of</p>
+ 
+  <div class="input-group input-group-lg">
+    <input type="text" id="searchbox" class="form-control" placeholder="E.g. Kiwi">
+    <span class="input-group-btn">
+      <button type="submit" id="searchButton" class = "btn btn-default"><%= image_tag("mag.png") %></button>
+    </span>
+  </div>
+
+  <div id="synonyms" />
+
+</div>
+  
+<script>
+	var synonyms;
+	
+	$( "#searchButton" ).click(function() {
+		var synonymDivision = document.getElementById("synonyms");
+		
+		while (synonymDivision.firstChild)
+			synonymDivision.removeChild(synonymDivision.firstChild);
+			
+		var synonymUrl = "/links/synonyms.json?name=" + $("#searchbox").val();
+		$.ajax({url: synonymUrl}).done(function(json)
+		{
+			synonyms = json;
+			
+			for (var synonym in synonyms) {
+				var synonymHeading = document.createElement("h2");
+				synonymHeading.innerHTML = synonyms[synonym];
+				synonymDivision.appendChild(synonymHeading);
+			}
+		})
+			
+	});
+
+	$(document).keypress(function(event) {
+		var keycode = (event.keyCode ? event.keyCode : event.which);
+		if(keycode == '13'){
+			$("#searchButton").trigger("click");
+		}
+	});
+</script>

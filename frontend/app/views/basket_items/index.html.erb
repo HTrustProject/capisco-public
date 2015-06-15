@@ -1,0 +1,64 @@
+<% provide(:title, "Baskets") %>
+<div class="tab-content">
+  <div class="row container col-md-6 col-md-offset-3 text-center">
+    <h1>HathiTrust
+      <small>Knowledge Basket</small>
+    </h1>
+    <p>Extend the knowledge base with terms provided by users.</p>
+  </div>
+
+
+  <div class="clear"></div>
+
+  <div class="row">
+    <div class="container col-md-6 col-md-offset-3">
+      <div id="basket-item-detail" class="result-list">
+        <div class="result-list-title">
+          <h2 class="title">Suggested terms</h2>
+        </div>
+      </div>
+
+      <div class="clear"></div>
+
+      <div id="basket" class="result-list">
+        <% if @basketItems.count == 0 %>
+            The knowledge basket is empty.
+        <% else %>
+            <ul class="document-list">
+              <% @basketItems.each do |item| %>
+                  <li id="item-<%= item.id %>" class="document-item">
+                    <div class="document-item-action action right">
+                      <ul>
+                        <li><%= link_to image_tag('img/network/deleteIcon.png'),
+                                        {action: 'archive', id: item.id},
+                                        remote: true,
+                                        'data-action' => 'archive' %></li>
+                      </ul>
+                    </div>
+
+                    <div class="document-item-checkbox"></div>
+                    <div class="document-item-content">
+                      <%= item.term %>
+                      <div class="document-item-details grey"><%= item.comment %></div>
+                    </div>
+                  </li>
+              <% end %>
+            </ul>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    $().ready(function () {
+        $('[data-action="archive"]').bind('ajax:success', function () {
+            var list = $('.document-list');
+            $(this).parentsUntil(list).remove();
+            if (list.children().length == 0) {
+                list.remove();
+                $('#basket').text('The last item has been removed.');
+            }
+        });
+    });
+</script>

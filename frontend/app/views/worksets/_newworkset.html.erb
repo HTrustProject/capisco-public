@@ -1,0 +1,71 @@
+<div id="save-workset" class="center">
+	<div id="newworkset-formpartial-id" class="save-workset-form">	
+	
+	<!-- 
+		http://edgeguides.rubyonrails.org/working_with_javascript_in_rails.html
+		http://stackoverflow.com/questions/3259234/ruby-on-rails-how-do-i-add-placeholder-text-to-a-f-text-field 
+		http://stackoverflow.com/questions/17507101/how-to-add-styling-to-a-single-input-in-a-form-for
+		http://stackoverflow.com/questions/10093021/rails-3-1-submit-form-without-refresh
+		http://stackoverflow.com/questions/7787800/rails-3-1-simple-form-submit-style-css
+		http://stackoverflow.com/questions/7510260/submit-tag-with-javascript-function
+	-->
+	<%= form_for :workset, url: worksets_path do |f| %>
+	
+	  <% if @workset && @workset.errors.any? %>
+	    <div id="error_explanation">
+	      <h2>
+	        <%= pluralize(@workset.errors.count, "error") %> prohibited
+	        this workset from being saved:
+	      </h2>
+	      <ul>
+	        <% @workset.errors.full_messages.each do |msg| %>
+	          <li><%= msg %></li>
+	        <% end %>
+	      </ul>
+	    </div>
+	  <% end %>
+	
+	<div class="save-workset-input">
+		<span class="" id="workset-details-title" name="workset-details">   
+			<%= f.text_field :title, :placeholder => "Title", :id => "title-input-id" %>
+		</span>
+	 
+	  <span id="save-workset-details-desc"> <!--style="display: none"-->
+			<%= f.text_area :description, :placeholder => "Description", :rows => "2", :cols => "30" %>
+			<!--<a class="hint" href="javascript:void(0)" onclick="$('#save-workset-details-desc').slideUp(); $('#save-workset-show-desc').slideDown();">Hide description field</a>-->
+	  </span>
+	  <span class="block"></span>
+		<span id="save-workset-show-desc">
+			<!--<a class="hint" href="javascript:void(0)" onclick="$('#save-workset-details-desc').slideDown(); $('#save-workset-show-desc').slideUp();">Add description</a>-->
+		</span>
+	</div>	 
+	  <p>
+	    <%= f.submit "Save Workset", :class => "tag btn btn-warning", :disabled => "true", :id => "submit-workset-id" %>
+	    <!-- , :onsubmit => "$('#new-workset-partial-id').slideUp();" -->
+	  </p>
+	<% end %>
+	
+	</div>	
+<span class="block"></span>
+<!--<div class="close-msg right" onclick="$('#new-workset-partial-id').hide();" title="Hide New Workset form"></div>-->
+<a class="hint" href="javascript:void(0)" onclick="$('#new-workset-partial-id').slideUp();">Hide form</a>
+</div>
+
+
+
+<!-- :onclick => "$('#new-workset-partial-id').slideDown();"-->
+
+<script>
+		$('#title-input-id').on('input', function () {				
+		
+		   	//need to input title at least to be able to save		   	
+
+				var title = $(this).val(); //$('#title-input-id').val();
+	         var button = document.getElementById("submit-workset-id");
+	         if(title) {
+	           	button.disabled = false;
+	        	} else {
+	         	button.disabled = true;
+	        	}
+		}); 
+</script>

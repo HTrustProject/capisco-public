@@ -1,0 +1,26 @@
+  
+    <% if @workset.errors.any? %>
+    <div id="error_explanation">
+      <h2>
+        <%= pluralize(@workset.errors.count, "error") %> prohibited
+        this workset from being saved:
+      </h2>
+      <ul>
+        <% @workset.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+    <% end %>
+    
+    <p>
+      <%= f.label :title %><br />
+      <%= f.text_field :title %><br />
+    </p>
+
+    <p>
+      <%= f.label :description %><br />
+      <%= f.text_field :description %><br />
+    </p>
+
+    <p><%= f.submit %></p>

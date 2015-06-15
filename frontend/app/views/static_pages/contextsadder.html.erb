@@ -1,0 +1,99 @@
+<% provide(:title, "Contexts Adder") %>
+<link href="/assets/visNetwork.css" rel="stylesheet" type="text/css" />
+<link href="/assets/vis.css" rel="stylesheet" type="text/css" />
+<script src="/assets/vis.js"></script>
+<script src="/assets/visNetworkDot.js"></script>
+
+
+
+
+
+<div id="searchDiv" class="container col-md-6 col-md-offset-3 text-center">
+  <h1>HathiTrust <small>Contexts Adder?</small></h1><br>
+</div>
+
+<div class="container" id="searchBoxes">
+  <div class="col-sm-4 column">
+    <div class="input-group">
+      <span class="input-group-addon">
+        <input type="checkbox" id='showInitialContext'>
+      </span>
+      <input type="text" class="form-control" id="initial" placeholder="Initial - One term">
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+
+  <div class="col-sm-4 column">
+    <div class="input-group">
+      <span class="input-group-addon">
+      <input type="checkbox" id='showContextContext'>
+      </span>
+      <input type="text" id="context" class="form-control" placeholder="Add Context - Context|Context|Context">
+    </div>
+  </div>
+
+  <div class="col-sm-3 column">
+    <div class="input-group">
+    <span class="input-group-addon">
+      <input type="checkbox" id='showSynonymSynonym'>
+      </span>
+      <input type="text" id="synonym" class="form-control" placeholder="Add Synonym - Synonym|Synonym|Synonym">
+    </div>
+  </div>
+
+  <div class="col-sm-1 column">
+   <button id="searchButton" type="button" class="btn btn-warning">Search</button>
+ </div>
+</div>
+
+
+
+<script>
+  $( "#searchButton" ).click(function() {
+    $("#searchDiv").animate({paddingTop:"-=160px"});
+    var ajax_load = "<div class='containder text-center' id='loadingGif'><img class='loading' src='/assets/load.gif' alt='loading...' /></div>";
+
+    var url = "/contextsadder/get" + encodeURI('?initial=' + $('#initial').val() + '&contexts=' + $('#context').val() + '&synonyms=' + $('#synonym').val() + '&showInitialContext=' + $('#showInitialContext').prop('checked') + '&showContextContext=' + $('#showContextContext').prop('checked')+ '&showSynonymSynonym=' + $('#showSynonymSynonym').prop('checked'));
+
+    draw(url);
+  });
+
+
+  $(document).keypress(function(event){
+    var keycode = (event.keyCode ? event.keyCode : event.which);
+    if(keycode == '13'){
+      $('#searchButton').trigger('click');
+    }
+  });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Divs used to display the network graph -->
+<div id="network-popUp">
+  <span id="operation">node</span> <br>
+  <table style="margin:auto;"><tr>
+    <td>id</td><td><input id="node-id" value="new value"></td>
+  </tr>
+  <tr>
+    <td>label</td><td><input id="node-label" value="new value"> </td>
+  </tr></table>
+  <input type="button" value="save" id="saveButton"></button>
+  <input type="button" value="cancel" id="cancelButton"></button>
+</div>
+<br />
+<div class="container col-md-8 col-md-offset-2 text-center" id="mynetwork"></div>
+
+<p class="container col-md-8 col-md-offset-2 text-center" id="selection"></p>

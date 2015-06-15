@@ -1,0 +1,78 @@
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
+ * or vendor/assets/stylesheets of plugins, if any, can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any styles
+ * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
+ * file per style scope.
+ *
+ *= require bootstrap.min
+ *= require_tree .
+ *= require_self
+ */
+@font-face {
+  font-family: 'Glyphicons Halflings';
+  src: url('../assets/glyphicons-halflings-regular.eot');
+  src: url('../assets/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), 
+       url('../assets/glyphicons-halflings-regular.woff') format('woff'), 
+       url('../assets/glyphicons-halflings-regular.ttf') format('truetype'), 
+       url('../assets/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
+}
+
+.manage-forms-id {
+	margin-left: auto;
+   margin-right: auto;
+   width: 700px ;
+	text-align: left;	
+}
+
+
+/* The following styles are shared between the controllers for "worksets" and "static_pages" + "search_results"
+Both New Workset form on the worksets page and the workset form on the results.html.erb page use the following */
+
+.block {
+	display: block;
+}
+
+.right {
+	text-align: right;
+}
+
+
+
+#save-workset {
+	margin: 10px 0;
+	padding: 5px 0;
+	background-color: #eeeeee;	
+}
+
+#save-workset .save-workset-form {
+	margin: auto;
+}
+
+#save-workset div {
+	display: inline-block;
+	vertical-align: top;
+	text-align: left;
+}
+
+#save-workset input[type="text"],
+#save-workset textarea {
+	width: 300px;
+	display: block;
+}
+
+#save-workset .workset-input span {
+	display: block;
+}
+
+#save-workset .save-workset-status {
+	display: inline-block;
+	margin-top: 10px;
+}
+
+/* End shared styles between worksets and static_pages + search_results */

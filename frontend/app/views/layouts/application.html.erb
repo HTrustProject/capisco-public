@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title><%= yield(:title) %> | Capisco: Semantic Analysis of HathiTrust Documents, Project at University of Waikato</title>
+  <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track'=> true %>
+  <%= javascript_include_tag 'application', 'data-turbolinks-track'=> true %>
+  <%= csrf_meta_tags %>
+</head>
+
+<body>
+	<% controller = params[:controller]; %>
+
+	<% if controller == 'concepts' %>
+		<div class="global-message">Expert Knowledge Work Area</div>
+	<% end %>
+
+	<div class="collapse navbar-collapse navHeaderCollapse">
+		<ul class="nav navbar-nav navbar-right">
+			<%
+		  		# http://apidock.com/rails/ActionView/Helpers/UrlHelper/current_page%3F
+		  		# current_page?(controller: 'static_pages') does not work for some reason
+				isActive = current_page?('/') || current_page?('/static_pages/semanticsearch') || controller == "search_results"
+			%>
+			<li class="<%= isActive ? 'active' : '' %>">
+				<a href="/static_pages/semanticsearch">Semantic Search</a>
+			</li>
+
+		  	<% isActive = controller == 'worksets' %>
+			<li class="<%= isActive ? 'active' : '' %>">
+				<a href="/worksets" class="<%= isActive ? 'active' : '' %>">Worksets</a>
+			</li>
+
+		  	<% isActive = (controller == 'concepts' || controller.start_with?('basket')) %>
+			<li class="<%= isActive ? 'active' : '' %>">
+				<a href="/concepts" class="<%= isActive ? 'active' : '' %>">Expert Mode</a>
+			</li>
+
+		  	<% isActive = current_page?('/static_pages/optionspage') %>
+			<li class="<%= isActive ? 'active' : '' %>">
+				<a href="/static_pages/optionspage" class="<%= isActive ? 'active' : '' %>">Developer</a>
+			</li>
+		</ul>
+	</div>
+
+
+  <div class="row">
+    <div class="col-md-1 column col-md-offset-2">
+    <a href="/"><%= image_tag("logo_with_text.png") %></a>
+    </div>
+  </div>
+
+
+  <%= yield %>
+
+</body>
+
+</html>

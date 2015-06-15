@@ -1,0 +1,208 @@
+<% provide(:title, "Visualize") %>
+<link href="/assets/visNetwork.css" rel="stylesheet" type="text/css" />
+<link href="/assets/vis.css" rel="stylesheet" type="text/css" />
+<script src="/assets/vis.js"></script>
+<script src="/assets/visNetwork.js"></script>
+
+<div id="concept" class="container text-center">
+	<h1>HathiTrust <small>Visual Exploration</small></h1>
+</div>
+
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-10 column">
+			<div class="row clearfix">
+				<div class="col-md-9 col-md-offset-2 column noRightPad">
+					<input type="text" id="searchbox" class="form-control" placeholder="eg... Kiwi">
+				</div>
+				<div class="col-md-1 column noLeftPad">
+					<a><%= image_tag("mag.png", :id => "searchButton") %></a>
+				</div>
+			</div>
+			<br />
+			
+			<div id="node-buttons" class="btn-toolbar" style="float: right; margin-right: 30px;">
+				<div id="concept-group" class="btn-group" role="group" style="display: none">
+					<button id="show-synonyms" type="button" class="btn btn-action" data-toggle="button">Synonyms</button>
+				</div>
+	            <div id="symbol-group" class="btn-group" role="group">
+					<button id="show-senses" type="button" class="btn btn-action" data-toggle="button">Senses</button>
+					<button id="show-contexts" type="button" class="btn btn-action" data-toggle="button">Contexts</button>
+				</div>
+				<div id="delete-group" class="btn-group" role="group">
+					<button id="delete-node" type="button" class="btn btn-action">Delete</button>
+				</div>
+          	</div>
+		</div>
+		<div class="col-md-1 column">
+		</div>
+	</div>
+</div>
+
+
+<div id="graph-div" style="height:800px">
+</div>
+
+
+<script>
+$(initialiseGraph());
+$("#searchButton").click(function() { search($("#searchbox").val()); });
+$("#delete-node").click(deleteClickHandler);
+$("#show-synonyms").click(synonymsClickHandler);
+$("#show-senses").click(sensesClickHandler);
+$("#show-contexts").click(contextsClickHandler);
+
+var map;
+var focusedNode;
+
+function initialiseGraph() {
+	var container = document.getElementById("graph-div");
+	map = new ConceptMap(container);
+	map.network.on("click", singleClickHandler);
+	map.network.on("doubleClick", doubleClickHandler);
+}
+
+function doubleClickHandler(properties) {
+	if (properties.nodes.length != 1)
+		return;
+		
+	var id = properties.nodes[0];
+	var node = map.nodes.get(id);
+	
+	if (node == focusedNode)
+		return;
+		
+	node.anchor = true;
+	map.nodes.update(node);
+	map.collapse();
+		
+	if (node.group == 'concepts') {
+		map.showSynonyms(node);
+		$("#show-synonyms").attr("aria-pressed", node.synonymsVisible);
+	} else {
+		map.showContexts(node);
+		$("#show-contexts").attr("aria-pressed", node.contextsVisible);
+	}
+}
+
+function search(symbol) {
+	var node = new Symbol(symbol);
+	node.anchor = true;
+	map.addNode(node);
+	map.showSenses(node);
+}
+
+function singleClickHandler(properties) {
+	if (properties.nodes.length != 1)
+		return;
+		
+	var id = properties.nodes[0];
+	var node = map.nodes.get(id);
+	
+	if (node == focusedNode)
+		return;
+	
+	if (node.group == 'concepts') {
+		$("#symbol-group").hide();
+		$("#concept-group").show();
+		var synonyms = $("#show-synonyms");
+		
+		synonyms.attr("aria-pressed", node.synonymsVisible);
+		synonyms.toggleClass("active", node.synonymsVisible);
+	} else {
+		$("#concept-group").hide();
+		$("#symbol-group").show();
+		var senses = $("#show-senses");
+		var contexts = $("#show-contexts");
+		
+		senses.attr("aria-pressed", node.sensesVisible);
+		senses.toggleClass("active", node.sensesVisible);
+		
+		contexts.attr("aria-pressed", node.contextsVisible);
+		contexts.toggleClass("active", node.contextsVisible);
+	}
+}
+
+function synonymsClickHandler(event) {
+	var selectionIds = map.network.getSelection();
+	if (selectionIds.nodes.length != 1)
+		return;
+	
+	var id = selectionIds.nodes[0];
+	var node = map.nodes.get(id);
+	node.anchor = true;
+	var synonyms = $("#show-synonyms");
+	
+	var visible = node.synonymsVisible;
+	synonyms.toggleClass("active", visible);
+	if (visible)
+		map.hideSynonyms(node);
+	else
+		map.showSynonyms(node);
+	synonyms.attr("aria-pressed", visible);
+	synonyms.toggleClass("focus", false);
+	event.preventDefault();
+	event.stopPropagation();
+}
+
+function sensesClickHandler(event) {
+	var selectionIds = map.network.getSelection();
+	if (selectionIds.nodes.length != 1)
+		return;
+	
+	var id = selectionIds.nodes[0];
+	var node = map.nodes.get(id);
+	node.anchor = true;
+	var senses = $("#show-senses");
+	
+	var visible = node.sensesVisible;
+	senses.toggleClass("active", visible);
+	if (visible)
+		map.hideSenses(node);
+	else
+		map.showSenses(node);
+	senses.attr("aria-pressed", visible);
+	senses.toggleClass("focus", false);
+	event.preventDefault();
+	event.stopPropagation();
+}
+
+function contextsClickHandler(event) {
+	var selectionIds = map.network.getSelection();
+	if (selectionIds.nodes.length != 1)
+		return;
+	
+	var id = selectionIds.nodes[0];
+	var node = map.nodes.get(id);
+	node.anchor = true;
+	var contexts = $("#show-contexts");
+	
+	var visible = node.contextsVisible;
+	contexts.toggleClass("active", visible);
+	if (visible) {
+		map.hideContexts(node);
+	} else {
+		map.showContexts(node);
+	}
+	contexts.attr("aria-pressed", visible);
+	contexts.toggleClass("focus", false);
+	event.preventDefault();
+	event.stopPropagation();
+}
+
+function deleteClickHandler(event) {
+	var selectionIds = map.network.getSelection();
+	if (selectionIds.nodes.length != 1)
+		return;
+	
+	var id = selectionIds.nodes[0];
+	var node = map.nodes.get(id);
+	node.anchor = false;
+	var deleteButton = $("#delete-node");
+	
+	deleteButton.toggleClass("focus", false);
+	event.preventDefault();
+	event.stopPropagation();
+}
+
+</script>

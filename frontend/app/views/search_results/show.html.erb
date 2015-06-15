@@ -1,0 +1,29 @@
+<% provide(:title, "Search results") %>
+
+<div id="results">
+	
+	<div class="row">
+		<div class="col-md-9" id="results-div">
+			
+		</div>
+		<div class="col-md-3" id="summary-div">
+			<div id="venn-div">
+				
+			</div>
+			<div id="terms-div">
+				<h2>Search terms</h2>
+				<% @terms.each_with_index do |term, index| %>
+				<div>
+					<button id="<%= term %>" type="button" class="btn btn-primary btn-block" data-toggle="button" aria-pressed="true" autocomplete="off">
+						<%= term %>
+					</button>
+				</div>
+				<% end %>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	
+</script>

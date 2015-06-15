@@ -1,0 +1,79 @@
+.disc {
+  list-style-type: disc;
+}
+
+.carousel-outer-indicators {
+  bottom: -50px;
+}
+
+.tall {
+   margin-bottom: 50px;
+}
+
+.short {
+   margin-top : 5px;
+   margin-bottom : 5px;
+}
+
+.wide {
+  margin-left: 25px;
+  margin-right: 25px;
+}
+
+.carousel-dark-indicators li {
+  background-color: #999;
+  background-color: rgba(70,70,70,.25);
+}
+
+.carousel-dark-indicators .active {
+  background-color: #444;
+}
+
+.carousel-left-control, .carousel-right-control {
+  width: 2%;
+}
+
+.carousel-left-control {
+  left: -25px;
+}
+
+.carousel-right-control {
+  left: 25px;
+}
+
+html,body {
+  height:100%;
+}
+
+.history-tab {
+  display: inline;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.result-list-title .description {
+  width: 80%;
+}
+
+.context .wide {
+  margin-right: 0;
+  margin-top: 10px;
+}
+
+#view-contexts .action {
+  float: none;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+#node-buttons button.active {
+  background-color: #ffbd76;
+}
+
+#node-buttons .btn-action {
+  margin-right: 2px;
+}
+
+#view-contexts .action {
+  margin-top: 20px;
+}

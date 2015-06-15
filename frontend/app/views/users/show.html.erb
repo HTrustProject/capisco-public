@@ -1,0 +1,27 @@
+<div class="manage-forms-id">
+<p>
+  <strong>Name:</strong>
+  <%= link_to @user.name, edit_user_path(@user) %>
+</p>
+
+<p>
+  <strong>Email:</strong>
+  <%= @user.email %>
+</p>
+ 
+<p>
+  <strong>Password:</strong>
+  <%= @user.password %>
+</p>
+
+<p>
+  <strong>Worksets:</strong>  
+  <% # @user.worksets.first.id 
+  	@user.worksets.each do |workset| %>
+		<%= workset.id.to_s + "," %>
+  <% end %>	
+</p>
+
+
+<%= link_to 'Back', users_path %>
+</div>

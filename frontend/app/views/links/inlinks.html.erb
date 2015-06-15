@@ -1,0 +1,48 @@
+<% provide(:title, "Inlinks") %>
+
+<div id="searchDiv" class="container col-md-6 col-md-offset-3 text-center">
+  <h1>HathiTrust <small>Inlinks Search</small></h1><br>
+  <p>Enter searches with the keyword. Watch your capitals and special chars.<br>Eg Pokémon != Pokemon...</p>
+ 
+  <div class="input-group input-group-lg">
+    <input type="text" id="searchbox" class="form-control" placeholder="Kiwi">
+    <span class="input-group-btn">
+      <button type="submit" id="clickButton" class = "btn btn-default"><%= image_tag("mag.png") %></button>
+    </span>
+  </div>
+  
+  <div id="inlinks" />
+  
+</div>
+
+
+  <script>
+    $( "#clickButton" ).click(function() {
+		var inlinksDivision = document.getElementById("inlinks");
+		
+		while (inlinksDivision.firstChild)
+			inlinksDivision.removeChild(inlinksDivision.firstChild);
+			
+		var url = "/links/inlinks.json" + encodeURI('?name=' + $('#searchbox').val());
+		$.ajax({url: url}).done(function(json)
+		{
+			inlinks = json;
+			
+			for (var inlink in inlinks) {
+				var inlinkHeading = document.createElement("h2");
+				inlinkHeading.innerHTML = inlinks[inlink];
+				inlinksDivision.appendChild(inlinkHeading);
+			}
+		})
+			
+	});
+
+
+      $(document).keypress(function(event){
+      var keycode = (event.keyCode ? event.keyCode : event.which);
+      if(keycode == '13'){
+          $('#clickButton').trigger('click');   
+      }
+
+  }); 
+  </script>

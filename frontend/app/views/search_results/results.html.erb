@@ -1,0 +1,334 @@
+<%= javascript_include_tag "/assets/canvasXpress/js/canvasXpress.min.js" %>
+<link href="/assets/canvasXpress/css/canvasXpress.css" rel="stylesheet" />
+<% provide(:title, "Results") %>
+
+<style>
+a.atHT:after {
+    content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=");
+    margin: 0 0 0 5px;
+}
+
+canvas * text { font-size: 300%; }
+
+.hideme
+{
+    opacity:0;
+}
+</style>
+
+<script id='demoScript'>
+		
+	var toggleCheckbox = function(id) {
+		$("#item-" + id).toggleClass('checked');
+		checkbox = $("#item-checkbox-" + id);
+		checkbox.prop("checked", !checkbox.prop("checked"));
+	}
+	
+	/*
+		canvasId -- ID of the tag that will contain the graph
+		graphData -- Data to be rendered
+	 */
+	var renderGraphs = function(canvasId, graphData) {
+		var cx1 = new CanvasXpress(canvasId,
+			{
+				"venn": {
+					"data": graphData.data,
+					"legend": graphData.legend
+				}
+			},
+			{
+				"graphType": "Venn",
+				"vennGroups": <%= raw @senseCount %>,
+				"vennLegendColors": true,
+				"marginTop" : 0,
+				"marginBottom" : 0,
+				"canvasBox" : false,
+				"maxTextSize": 30,
+  				"colorScheme": "user",
+  				"overlayFontSize": 50,
+  				"legendPosition" : "right",
+				"disableToolbar": true,
+			}
+		);
+	}
+	
+	/*
+		canvasId -- ID of the tag that will contain the graph
+	 */
+ 	var showGraphs = function(canvasId) {
+		$.ajax({
+			url: "/search_results/returnAJSON.json?<%= {:combinations => @combinationsAsString, :senseTerms => @senseTerms }.to_query() %>",
+			success: function(data) {
+				renderGraphs(canvasId, data);
+ 			}
+		});
+	}
+	
+	$().ready( function() {
+		showGraphs('venn-chart'); 
+	});
+	
+
+	var metadata_id_cache = {};
+
+
+	function replaceIdWithTitle(internalId, docid, page_id, metadata_title) { 
+		var page_id_num = Number(page_id);	  
+		if(metadata_title) {
+			$('.Title-id-'+internalId).attr("data-doctitle", metadata_title);
+		}
+		$('.Title-id-'+internalId).html(metadata_title);
+		$('#item-'+internalId + ' .document-item-page').html("Page " + page_id_num);
+		//$('#Title-id-'+internalId).attr("Title", "View OCR'd text of " + docid + " [scanned page " + page_id + "]");
+
+		metadata_id_cache[docid] = metadata_title;
+		// console.log("setting up title cache for " + docid);
+	}
+
+
+	var getTitle = function (internalId, docid) {
+//return;
+		// console.log(internalId);
+		// console.log(docid);
+		setTimeout(function(){
+				var docid_parts = docid.split(" "); 
+				docid = docid_parts[0];
+				var page_id = docid_parts[1];
+
+				var at_ht_docid = docid.replace(/\+/g,":").replace(/=/g,"/");
+				var htview_url = "http://babel.hathitrust.org/cgi/pt?id=" + at_ht_docid + ";view=1up;seq=" + Number(page_id);
+				$('#at-ht-id-'+internalId).attr("href",htview_url);
+				$('#at-ht-id-'+internalId).attr("Title","View the scanned page of this document at the HathiTrust");
+				$('#at-ht-id-'+internalId).attr("target","_blank");
+
+				if (docid in metadata_id_cache) {
+					// console.log("Using cached version of title for " + docid);
+					replaceIdWithTitle(internalId,docid,page_id,metadata_id_cache[docid]);
+				}
+				else {
+					$.ajax({
+						url: "/search_results/returnMetadataAJSON.json?docid="+docid,
+						success: function(data) { replaceIdWithTitle(internalId,docid,page_id,data.title) }
+					});
+				}
+		},0)
+	};
+	
+
+	// When a toplevel checkbox is ticked, tick all sub checkboxes
+	// http://stackoverflow.com/questions/3373763/jquery-how-to-find-if-div-with-specific-id-exists
+	$(document).ready(function () {		
+		for (var counter = 1; ; counter++) {
+			var checkboxId = "checkall-checkbox"+counter+"-id"; // e.g. checkall-checkbox1-id
+			
+			if($("#" + checkboxId).length != 0) { //checkboxId exists, add a click handler that selects all checkboxes in the section				
+				 				
+				$("#"+checkboxId).click(function () {
+					// counter can't be used in this function, as the click is called
+					// much after the loop has terminated. So need to number of the  
+					// checkbox class from the parent checkbox id
+				
+  					var id = $(this).prop('id'); // checkall-checkbox1-id
+  					id = id.replace("checkall-checkbox", "").replace("-id", "");  					
+        			$("input.checkboxClass"+id).prop('checked', $(this).prop('checked'));
+        			$("li.checkboxClass"+id).toggleClass('checked', $(this).prop('checked'));
+    			});
+  			} else {  				
+				//alert("Does not exist: " + checkboxId);  				
+  				break;
+			}			
+		}    
+	});
+	
+	// moved from body onLoad to here
+	$().ready( function() {	
+		loadWorksets();
+	});
+	
+	var toggleSenses = function(activeSense) {
+		$('.combination-heading').each(function() {
+			var rellink = $(this).attr('data-rellink');
+			$(this).toggle(rellink === activeSense);
+		});
+		$('#sense-links li').each(function() {
+			var rellink = $(this).attr('data-rellink');
+			$(this).toggleClass('active', rellink === activeSense);
+		});
+	}
+</script>
+		<div class="tab-content">
+			<div class="row container col-md-6 col-md-offset-3 text-center">
+			<h1>HathiTrust <small>Semantic Search</small></h1>
+			<p>
+			<!--
+				<%	@combinationsAsString.each do |key|	%>
+				<%= if @senseResults[key].length != 0 then key end %>
+				<% end %>
+			-->			
+			</p>
+		</div> 
+      
+		<dir class="clear"></dir>         
+
+		<!-- Save To Workset form -->     
+		<%= render 'worksets/worksetform' %>
+
+  <div class="row">
+    <div class="container col-md-5 col-md-offset-2">
+		<div id="senseResults" class="result-list">
+		<% 
+		counter = 0;	   
+		@combinationsAsString.each do |key|
+
+			# skip any combinations that have no search result 
+			# (e.g. skip Cow-calf+Kiwifruit if they have no search results)
+			
+		   if @senseResults[key].length == 0 then
+		     next
+		   else
+		   	counter += 1  
+		   end
+		   
+		   # for a key of the form Kiwi|Cow-calf|Wellington
+		   # generate a relative link of the form Kiwi_Cow_Wellington
+		   # and list the anchor as Kiwi, Cow, Wellington
+	
+		   # global substitution. But don't use: gsub! old, new 
+		   # since it modifies the original string so that all copies contain 
+		   # the same. Use gsub() for creating copies of the original string
+		   # and modifying each separately.
+		   
+		   rellink = key.gsub("|", "_")
+		   list = key.gsub("|", ", ")
+		   senselist = key.gsub("|", ",")   
+		   
+		   # html 5 allows custom attributes, but the page must have the right doctype for html5
+		   # http://www.javascriptkit.com/dhtmltutors/customattributes.shtml
+	
+		   
+		   # need to store sense and term information for each combination heading of the search results
+		   senses = key.split("|")
+		   termnumlist = ""
+		   senseidlist = ""
+		   termlist = ""
+		   senses.each do |sense|
+		      termnumlist += @senseMap[sense][:termnum].to_s + ","
+		      termlist += @senseMap[sense][:term] + ","
+		      senseidlist += @senseMap[sense][:senseid] + ","
+		   end
+		   termnumlist.chomp!(",")
+		   termlist.chomp!(",")
+		   senseidlist.chomp!(",")
+	   %>
+
+		<div id="combination-heading<%= counter.to_s %>" class="combination-heading" <% if counter > 1 %>style="display: none"<% end %> 
+			data-senses="<%= senselist %>" 
+			data-terms="<%= termlist %>" 
+			data-termnums="<%= termnumlist %>" 
+			data-senseids="<%= senseidlist %>"
+			data-rellink="<%= rellink  %>"> 
+			<div class="result-list-title">
+				<input type="checkbox" id="checkall-checkbox<%= counter.to_s %>-id"
+						name="checkall-checkbox<%= counter.to_s %>" title="Select all items of this sense"
+						onclick="var value = $(this).prop('checked'); $('#combination-heading<%= counter.to_s %> .document-item').toggleClass('checked', value); $('#combination-heading<%= counter.to_s %> input').prop('checked', value);"/>
+				<a class="combination-title" name="<%= rellink  %>"><h2 class="Aname"><%= list %></h2></a>
+			</div>
+	  
+
+			<!-- % for r in @senseResults[key] % -->
+			<ul class="document-list">
+				<% @senseResults[key].each_with_index do |r, index| %>
+					<!--length: <%= @senseResults[key].length %><br />-->	   
+					<% internalId = r.internalid.to_s; %>
+					<% boxSize = 8 %>
+					<% if index % boxSize == 0 %>
+						<span class="hideme-box">
+					<% end %>
+					<li id="item-<%= internalId %>" class="document-item <% if index > boxSize %>hideme<% else %>showme<% end %>"
+						onclick="toggleCheckbox('<%= internalId %>');"
+						data-internalId="<%= internalId %>"
+						data-sourceId="<%= r.sourceid %>">
+						<input type="checkbox" id="item-checkbox-<%= internalId %>" name="item-checkbox-<%= internalId %>" class="checkboxClass<%= counter.to_s %>" 		  
+							data-sourceid="<%= r.sourceid %>" 
+							data-internalid="<%= internalId %>"/>
+							
+						<div class="document-item-checkbox"></div>
+						<div class="document-item-content">
+							<a href="/get_doc/get_document/?num=<%= internalId %>" id="at-ht-id-<%=r.internalid.to_s%>" target="_blank">
+								<span class="h4ID Title-id-<%=r.internalid.to_s%>" data-doctitle="<%= r.sourceid %>" id="Title-id-<%=r.internalid.to_s%>">ID: <%= r.sourceid %></span>
+							</a> 
+							<!-- | <a href="" class="atHT" id="at-ht-id-<%=r.sourceid.to_s%>">@HT</a> -->
+						
+							<div class="document-item-details grey">
+								<div class="document-item-page"></div>
+								<div class="foundusing">Found using: <%= key %></div>
+							</div>
+						</div> <!-- document-item-content -->
+						<% if index % boxSize == boxSize - 1 %>
+							</span>
+						<% end %>
+					</li> <!-- document -->
+				<% end %>
+				<!-- <%= "counter is: " + counter.to_s %> -->
+			</ul>
+		</div> <!-- end combination heading -->
+		<% end %>  
+      
+
+		</div>
+ 	</div>
+    
+    
+	<div id="sidebar" class="container col-md-4 col-md-offset-0">
+		<ul id="sense-links" class="orange-square-list">
+			<% @combinationsAsString.each_with_index do | key, idx |
+				if @senseResults[key].length > 0 then
+					rellink = key.gsub("|", "_")
+					list = key.gsub("|", ", ")           
+			%>
+				<li data-rellink="<%= rellink %>" class="<% if idx == 0 %>active<% end %>">
+					<a href="javascript:void(0)" onclick="toggleSenses('<%= rellink %>')"><%= list %></a>
+					<span class="hint">(<%= @senseResults[key].count %>)</span>
+				</li>
+			<% 
+					end
+				end
+			%>
+		</ul>
+
+
+
+		<div class="row"><canvas id="venn-chart" width='400' height='400'></canvas></div>
+      
+		<!-- In case outlinks is enabled  -->
+		<% for r in @outlinkArray1 %>
+			<a href="/get_doc/get_document/?num=<%= r.internalid %>", target="_blank">
+			<h4 class="h4ID"> ID: <%= r.sourceid %> </h4></a>
+			
+			<span class="foundusing">Found using: <%= @outlinkTerms[0] %></span></p>
+		<%end%>      
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	$('.showme').each(function(){
+    	getTitle($(this).attr('data-internalId'), $(this).attr('data-sourceId'));
+	});
+	
+    /* Every time the window is scrolled ... */
+    $(window).scroll( function(){
+        /* Check the location of each desired element */
+        $('.hideme-box li').each( function(i){
+            var bottom_of_object = $(this).offset().top + $(this).outerHeight();
+            var bottom_of_window = $(window).scrollTop() + $(window).height();
+            
+            /* If the object is completely visible in the window, fade it it */
+            if( bottom_of_window > bottom_of_object ){
+            	getTitle($(this).attr('data-internalId'), $(this).attr('data-sourceId'));
+                $(this).animate({'opacity':'1'},500);
+            }
+        }); 
+    });
+});
+</script>

@@ -1,0 +1,59 @@
+<% provide(:title, "Explore") %>
+<body>
+	<div id="searchDiv">
+		<div class="row container col-md-6 col-md-offset-3 text-center">
+			<h1>HathiTrust <small>Explore Contexts</small></h1>
+			<p id="hint">Enter a keyword and explore its contexts.</p>
+	    </div>
+	
+		<div class="row container col-md-10 col-md-offset-2" id="senses"></div>
+	 
+		<div class="container">
+			<div class="row clearfix">
+				<div class="col-md-10 column">
+					<div class="row clearfix">
+						<div class="col-md-9 col-md-offset-2 column noRightPad">
+							<input type="text" id="searchbox" class="form-control" placeholder="e.g., Kiwi">
+						</div>
+						<div class="col-md-1 column noLeftPad">
+							<a href="#"><%= image_tag("mag.png", :id => "searchButton") %></a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-1 column">
+				</div>
+			</div>
+		</div>
+		
+	</div>
+</body>
+
+<script>
+var addSenseConcepts = function(concepts) {
+	var entries = concepts.map(function(concept){
+		var uri = encodeURI("/concepts/viewContexts?id=" + concept.id);
+		var link = $("<a href=" + uri + " data-toggle=\"tooltip\" title=\"" + concept.description + "\"></a>");
+		link.addClass("text-left");
+		var name = $("<p>" + concept.name + "</p>");
+		name.appendTo(link);
+		return link;
+	});
+	
+	createCarousel("senses-carousel", entries).appendTo($("#senses"));
+};
+
+$( "#searchButton" ).click(function() {
+	var symbol = $('#searchbox').val();
+	$("#hint").html("Showing concepts related to the word \"" + symbol + "\"");
+	$("#senses").empty();
+	getSenses(symbol, addSenseConcepts);
+});
+
+
+$(document).keypress(function(event){
+  	var keycode = (event.keyCode ? event.keyCode : event.which);
+	if(keycode == '13') {
+		$('#searchButton').trigger('click');   
+	}
+  }); 
+</script>

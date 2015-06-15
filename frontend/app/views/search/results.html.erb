@@ -1,0 +1,19 @@
+<p>Results of search...</p>
+
+<div id="feed">
+
+<% if (@result[1].include? '|') %>
+	<% @terms = @result[1].split('|') %>
+	<% for l in @terms do%>
+		<a href="/get_doc/get_document/?num=<%= l %>" target="_blank"><%= l %></a>
+	<% end %>
+<% else %>
+	<% for l in @result do%>
+		<%= l %><br>
+	<% end %>
+<% end %>
+
+
+
+
+</div>
